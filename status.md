@@ -3,6 +3,6 @@
 **28/07/2024** 
 
 - GitHub Repository: GoldenEye-v2
-\'''shell
+\```shell
 git remote -v
-\'''
+\```
