@@ -1,8 +1,8 @@
 # Status update
 
-** 28/07/2024 ** 
+**28/07/2024** 
 
 - GitHub Repository: GoldenEye-v2
-''' git
+\'''shell
 git remote -v
-
+\'''
