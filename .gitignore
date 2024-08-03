@@ -1,3 +1,7 @@
 # .gitignore
-backoffice/config.py
+Backoffice\config.py
+*__pycache__*
+
 *.log
+
+Backoffice/log_get_lunar_data.log
