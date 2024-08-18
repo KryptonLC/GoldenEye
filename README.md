@@ -3,7 +3,7 @@ Notes. Relevant only for the developer 🤷‍♂️
 
 ## 19/07/2024 ##
 
-[] put *_lunar_symbols funcs into one file
+
 
 ## 18/07/2024 ##
 
@@ -11,7 +11,7 @@ Notes. Relevant only for the developer 🤷‍♂️
 - [+] get_lunar_data
 - [+] save_lunar_data. Lunar List must be joined with existing public.symbols table and checked only for changes. Overwriting will dump meta data (last update, flags, etc.)
 - [+] read_lunar_data
-
+- [+] put *_lunar_symbols funcs into one file
 
 
 [] list error codes
