@@ -1,12 +1,22 @@
 # Status update
 Notes. Relevant only for the developer 🤷‍♂️
 
-## 19/07/2024 ##
+## 20/08/2024 ##
+
+* [+] landing_process
+* lunar_data - DF table
+* [+] add API call counter
+* build main loop for continuous data loading 
+
+* API call handlers stored in utils.py
+* new view: public.key_usage, new table: public.api_request_logs
+
+## 19/08/2024 ##
 
 [+] get_lunar_data<br>
 [+] save_lunar_data<br>
 [+] buffer_symbol_data - DF table<br>
-[] symbol_data - DF table<br>
+
 
 * [IMPORTANT] Dane zapisywane przez save_lunar_data do buforowej tabeli. Bufor regularnie zrzucany do jednej, partycjonowanej tabeli. Dump trigerowany przez Staging. 
 
@@ -18,7 +28,7 @@ result, data_df = get_lunar_data(3, start_time, end_time)
 ``` 
 
 
-## 18/07/2024 ##
+## 18/08/2024 ##
 
 **New functions - landing**
 - [+] get_lunar_data
