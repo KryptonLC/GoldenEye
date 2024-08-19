@@ -3,6 +3,19 @@ Notes. Relevant only for the developer 🤷‍♂️
 
 ## 19/07/2024 ##
 
+[+] get_lunar_data<br>
+[+] save_lunar_data<br>
+[+] buffer_symbol_data - DF table<br>
+[] symbol_data - DF table<br>
+
+* [IMPORTANT] Dane zapisywane przez save_lunar_data do buforowej tabeli. Bufor regularnie zrzucany do jednej, partycjonowanej tabeli. Dump trigerowany przez Staging. 
+
+* [IMPORTANT] Initial data load co 2 lata w loop od 2018 do dzisiaj
+```py
+start_time = "01.01.2018"
+end_time = "31.12.2020"
+result, data_df = get_lunar_data(3, start_time, end_time)
+``` 
 
 
 ## 18/07/2024 ##
