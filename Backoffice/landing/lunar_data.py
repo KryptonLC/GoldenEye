@@ -9,6 +9,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import lunar_key, connection_string
+from utils import register_api_request
 from lunar_symbols import read_lunar_symbols
 
 def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time: str = "19.08.2024") -> tuple[int, pd.DataFrame]:
@@ -42,6 +43,8 @@ def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time:
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
+        register_api_request("LunarCrush", "key_outlook", "get_lunar_data", url)
+
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error: {e.response.status_code} - {e.response.reason}")
         return e.response.status_code, pd.DataFrame()
@@ -130,13 +133,13 @@ def save_lunar_data(data_df: pd.DataFrame, table_name: str = 'buffer_lunar_data'
         symbol_id = int(data_df['symbol_id'].max())
         max_time_unix = int(data_df['time_unix'].max())
         last_update_time = datetime.now()
-        update_query = text("""
+        query = text("""
             UPDATE public.symbols
             SET last_update = :last_update_time, last_timestamp = :max_timestamp
             WHERE id = :symbol_id;
             """)
         
-        session.execute(update_query, {'last_update_time': last_update_time, 'max_timestamp': max_time_unix, 'symbol_id': symbol_id})
+        session.execute(query, {'last_update_time': last_update_time, 'max_timestamp': max_time_unix, 'symbol_id': symbol_id})
         session.commit()
 
         # If the operation succeeds, return a success code and message
@@ -148,7 +151,7 @@ def save_lunar_data(data_df: pd.DataFrame, table_name: str = 'buffer_lunar_data'
         # If an error occurs, return a failure code and the error message
         return 9005, str(e)
     
-result, data_df = get_lunar_data(7, "01.01.2020", "19.08.2024")
+result, data_df = get_lunar_data(4, "01.01.2020", "19.08.2024")
 result2, message = save_lunar_data(data_df)
 
 print(len(data_df))

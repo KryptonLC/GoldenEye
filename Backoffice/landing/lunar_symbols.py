@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import lunar_key, connection_string
-
+from utils import register_api_request
 
 def get_lunar_symbols() -> tuple[int, pd.DataFrame] :
     """
@@ -30,6 +30,7 @@ def get_lunar_symbols() -> tuple[int, pd.DataFrame] :
     try:
         response = requests.request("GET", url=url, headers=headers)
         response.raise_for_status()
+        register_api_request("LunarCrush", "key_outlook", "get_lunar_symbols", url)
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error: {e.response.status_code} - {e.response.reason}")
         return e.response.status_code, pd.DataFrame()

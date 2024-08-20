@@ -4,9 +4,10 @@ Notes. Relevant only for the developer 🤷‍♂️
 ## 20/08/2024 ##
 
 * [+] landing_process
-* lunar_data - DF table
+* [+] lunar_data - DF table partitioned
 * [+] add API call counter
-* build main loop for continuous data loading 
+* [+] build main loop for continuous data loading 
+* [+] dump_lunar_buffer
 
 * API call handlers stored in utils.py
 * new view: public.key_usage, new table: public.api_request_logs
