@@ -50,7 +50,7 @@ def register_api_request(service: str, key_name: str, function_name: str, url: s
 
 def read_key_usage(default_keys=None) -> dict:
     """
-    Reads the key usage information from the public.key_usage_summary view for all keys.
+    Reads the key usage information from the public.key_usage view for all keys.
     Initializes with default values if no records are found.
 
     Args:
@@ -75,7 +75,7 @@ def read_key_usage(default_keys=None) -> dict:
                     request_count_hour,
                     request_count_day
                 FROM 
-                    public.key_usage_summary
+                    public.key_usage
             """)
             result = connection.execute(query).fetchall()
 
@@ -86,10 +86,10 @@ def read_key_usage(default_keys=None) -> dict:
 
             # Update usage_data with actual data from the query result
             for row in result:
-                usage_data[row['key_name']] = {
-                    "minute": row['request_count_minute'],
-                    "hour": row['request_count_hour'],
-                    "day": row['request_count_day']
+                usage_data[row[0]] = {  # Access the first column as row[0] which is key_name
+                    "minute": row[1],   # Access the second column as row[1] which is request_count_minute
+                    "hour": row[2],     # Access the third column as row[2] which is request_count_hour
+                    "day": row[3]       # Access the fourth column as row[3] which is request_count_day
                 }
 
             return usage_data

@@ -41,9 +41,10 @@ def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time:
     }
 
     try:
+        register_api_request("LunarCrush", "key_outlook", "get_lunar_data", url)
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        register_api_request("LunarCrush", "key_outlook", "get_lunar_data", url)
+        
 
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error: {e.response.status_code} - {e.response.reason}")
@@ -54,6 +55,9 @@ def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time:
 
     try:
         data = response.json()
+        if not data.get('data'):
+            print(f"No data returned from LunarCrush for symbol_id {symbol_id}.")
+            return 2, pd.DataFrame()
         data_df = pd.DataFrame(data['data'])
     except (json.JSONDecodeError, KeyError) as e:
         print(f"Error processing JSON data: {e}")
@@ -151,11 +155,3 @@ def save_lunar_data(data_df: pd.DataFrame, table_name: str = 'buffer_lunar_data'
         # If an error occurs, return a failure code and the error message
         return 9005, str(e)
     
-result, data_df = get_lunar_data(4, "01.01.2020", "19.08.2024")
-result2, message = save_lunar_data(data_df)
-
-print(len(data_df))
-print(data_df.head())
-
-print(result2)
-print(message)

@@ -60,6 +60,11 @@ def read_lunar_symbols() -> tuple[int, pd.DataFrame]:
     try:
         with engine.connect() as connection:
             symbols_df = pd.read_sql_table('symbols', connection)
+            symbols_df = symbols_df.rename(columns={
+                'id': 'symbol_id',
+                'name': 'symbol_name',
+                'symbol': 'symbol_ticker'
+            })
         return 1, symbols_df
     except Exception as e:
         print(f"Error reading symbols table: {e}")
