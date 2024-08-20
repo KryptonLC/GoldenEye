@@ -19,6 +19,7 @@ Notes. Relevant only for the developer 🤷‍♂️
 [+] buffer_symbol_data - DF table<br>
 
 
+
 * [IMPORTANT] Dane zapisywane przez save_lunar_data do buforowej tabeli. Bufor regularnie zrzucany do jednej, partycjonowanej tabeli. Dump trigerowany przez Staging. 
 
 * [IMPORTANT] Initial data load co 2 lata w loop od 2018 do dzisiaj
@@ -29,6 +30,7 @@ result, data_df = get_lunar_data(3, start_time, end_time)
 ``` 
 
 
+## 18/08/2024 ##
 ## 18/08/2024 ##
 
 **New functions - landing**
