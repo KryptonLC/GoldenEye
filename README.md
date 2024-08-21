@@ -1,6 +1,14 @@
 # Status update
 Notes. Relevant only for the developer 🤷‍♂️
 
+## 21/08/2024 ##
+
+* Staging zaczety, ale nie dziala, jak powinien. OHLC można zrobić w Pythonie, ale to wymaga dużego data transfer. Lepiej postarać się o staging w PostgreSQL. 
+* Sprawdzić czas działania obu metod. 
+* OHLC dla social
+
+
+
 ## 20/08/2024 ##
 
 * [+] landing_process
@@ -29,8 +37,6 @@ end_time = "31.12.2020"
 result, data_df = get_lunar_data(3, start_time, end_time)
 ``` 
 
-
-## 18/08/2024 ##
 ## 18/08/2024 ##
 
 **New functions - landing**
