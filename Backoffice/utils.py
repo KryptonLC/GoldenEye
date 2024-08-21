@@ -97,7 +97,6 @@ def read_key_usage(default_keys=None) -> dict:
     except Exception as e:
         raise RuntimeError(f"Failed to read key usage: {e}")
     
-
 import time
 from sqlalchemy import create_engine, text
 from config import connection_string
@@ -106,6 +105,7 @@ def dump_lunar_buffer():
     """
     Dumps the data from landing.buffer_lunar_data into landing.lunar_data
     and then truncates the buffer table. Measures and prints the execution time.
+    Waits for confirmation that the transaction succeeded.
     """
     try:
         # Create SQLAlchemy engine using the connection string
@@ -114,24 +114,26 @@ def dump_lunar_buffer():
         start_time = time.time()
         
         with engine.connect() as connection:
-            # Execute the insert and truncate operations
-            insert_query = text("""
-                INSERT INTO landing.lunar_data (symbol_id, datetime, time_unix, open, high, low, close, volume_24h, market_cap, 
-                                                circulating_supply, sentiment, contributors_active, contributors_created, 
-                                                posts_active, posts_created, interactions, social_dominance, galaxy_score, 
-                                                volatility, alt_rank, spam)
-                SELECT symbol_id, datetime, time_unix, open, high, low, close, volume_24h, market_cap, circulating_supply, 
-                       sentiment, contributors_active, contributors_created, posts_active, posts_created, interactions, 
-                       social_dominance, galaxy_score, volatility, alt_rank, spam
-                FROM landing.buffer_lunar_data;
-            """)
-            truncate_query = text("TRUNCATE TABLE landing.buffer_lunar_data;")
-            
-            connection.execute(insert_query)
-            connection.execute(truncate_query)
+            with connection.begin():  # Start a transaction block
+                # Execute the insert and truncate operations
+                query = text("""
+                    INSERT INTO landing.lunar_data (symbol_id, datetime, time_unix, open, high, low, close, volume_24h, market_cap, 
+                                                    circulating_supply, sentiment, contributors_active, contributors_created, 
+                                                    posts_active, posts_created, interactions, social_dominance, galaxy_score, 
+                                                    volatility, alt_rank, spam)
+                    SELECT symbol_id, datetime, time_unix, open, high, low, close, volume_24h, market_cap, circulating_supply, 
+                           sentiment, contributors_active, contributors_created, posts_active, posts_created, interactions, 
+                           social_dominance, galaxy_score, volatility, alt_rank, spam
+                    FROM landing.buffer_lunar_data;
+                """)
+                
+                connection.execute(query)
+
+                # Truncate the buffer table after the insert is successful
+                connection.execute(text("TRUNCATE TABLE landing.buffer_lunar_data;"))
         
         elapsed_time = time.time() - start_time
-        print(f"Dumping the buffer: {elapsed_time:.2f} sec")
+        print(f"🔄️ Dumping the buffer: {elapsed_time:.2f} sec")
 
     except Exception as e:
         print(f"Failed to dump lunar buffer: {e}")

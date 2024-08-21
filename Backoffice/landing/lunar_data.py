@@ -56,7 +56,7 @@ def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time:
     try:
         data = response.json()
         if not data.get('data'):
-            print(f"No data returned from LunarCrush for symbol_id {symbol_id}.")
+            #print(f"No data returned from LunarCrush for symbol_id {symbol_id}.")
             return 2, pd.DataFrame()
         data_df = pd.DataFrame(data['data'])
     except (json.JSONDecodeError, KeyError) as e:
