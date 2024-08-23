@@ -24,6 +24,8 @@ def landing_process():
 
     result_code, symbols_df = read_lunar_symbols()
     symbols_df = symbols_df.sort_values(by='symbol_id', ascending=True)
+    
+    symbols_df = symbols_df[symbols_df['symbol_id'] > 2238]
 
     for index, row in symbols_df.iterrows():
         symbol_id = row['symbol_id']
@@ -36,7 +38,7 @@ def landing_process():
             key_usage = read_key_usage()
             continue
 
-        if key_usage["key_outlook"]["day"] >= 1900:
+        if key_usage["key_outlook"]["day"] >= 2000:
             print("Daily limit reached. Waiting 1 hour.")
             time.sleep(3600)
             key_usage = read_key_usage()
