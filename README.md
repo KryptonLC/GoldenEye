@@ -1,6 +1,15 @@
 # Status update
 Notes. Relevant only for the developer 🤷‍♂️
 
+## 26/08/2024 ##
+
+* Nie jest potrzebny OHLC w ogóle. Agregaty są predefiniowane w views. Dane dla pojedynczego symbol_id przetwarzane do OHLC przez Pandas. 
+* [] Aggregates - last 24h - Top Gainers: price, posts, interactions
+
+## 23/08/2024 ##
+
+* Added save_code.py for providind Markdown file for chat
+
 ## 21/08/2024 ##
 
 * Staging zaczety, ale nie dziala, jak powinien. OHLC można zrobić w Pythonie, ale to wymaga dużego data transfer. Lepiej postarać się o staging w PostgreSQL. 
