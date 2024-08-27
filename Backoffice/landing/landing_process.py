@@ -25,7 +25,7 @@ def landing_process():
     result_code, symbols_df = read_lunar_symbols()
     symbols_df = symbols_df.sort_values(by='symbol_id', ascending=True)
     
-    symbols_df = symbols_df[symbols_df['symbol_id'] > 2238]
+    symbols_df = symbols_df[symbols_df['symbol_id'] > 18349]
 
     for index, row in symbols_df.iterrows():
         symbol_id = row['symbol_id']
