@@ -12,21 +12,21 @@ from config import lunar_key, connection_string
 from utils import register_api_request
 from lunar_symbols import read_lunar_symbols
 
-def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time: str = "19.08.2024") -> tuple[int, pd.DataFrame]:
+def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020 00:00", end_time: str = "19.08.2025 23:00") -> tuple[int, pd.DataFrame]:
     """
     Call LunarCrush API to receive symbol's hourly timeframe data.
 
     Args:
     symbol_id (int): The ID of the symbol.
-    start_time (str): Start date in the format "dd.mm.yyyy". Default is "01.01.2020".
-    end_time (str): End date in the format "dd.mm.yyyy". Default is "19.08.2024".
+    start_time (str): Start date in the format "dd.mm.yyyy hh:mm".
+    end_time (str): End date in the format "dd.mm.yyyy hh:mm".
 
     Returns:
     Tuple[int, pd.DataFrame]: A tuple containing the result code and raw data as a pandas DataFrame.
     """
     # Combine date with default start and end times
-    start_datetime = f"{start_time} 00:00"
-    end_datetime = f"{end_time} 23:00"
+    start_datetime = f"{start_time}"
+    end_datetime = f"{end_time}"
 
     # Convert to Unix timestamps
     start_unix = int(datetime.strptime(start_datetime, "%d.%m.%Y %H:%M").timestamp())

@@ -20,6 +20,7 @@
         loading/
         staging/
             lunar_data_month.sql
+            MV lunar_data_etl.sql
     Data/
         lunar_data_2024.sql
 
@@ -585,7 +586,7 @@ def landing_process():
     result_code, symbols_df = read_lunar_symbols()
     symbols_df = symbols_df.sort_values(by='symbol_id', ascending=True)
     
-    symbols_df = symbols_df[symbols_df['symbol_id'] > 2238]
+    symbols_df = symbols_df[symbols_df['symbol_id'] > 18349]
 
     for index, row in symbols_df.iterrows():
         symbol_id = row['symbol_id']
@@ -942,6 +943,7 @@ def save_lunar_symbols(symbols_df) -> tuple[int,str]:
 ### lunar_data_month.sql
 
 ```python
+/*
 WITH windowed_data AS (
     SELECT
         symbol_id,
@@ -1024,6 +1026,117 @@ GROUP BY
     interactions_open,
     interactions_close;
 
+
+;
+*/
+
+with intervals as (
+	SELECT 
+	    start,
+	    (start + interval '1 hour' - interval '1 second') AS end
+	FROM generate_series(
+	    DATE_TRUNC('hour', NOW()) - interval '24 hours', 
+	    DATE_TRUNC('hour', NOW()), 
+	    interval '1 hour'
+	) AS start
+)
+
+	
+select distinct
+	a.start
+	,a.end
+    ,extract(year from a.end) as year
+    ,extract(month from a.end) as month
+	,extract(day from a.end) as day
+	,b.symbol_id
+	
+	,first_value(b.open) over w as open
+	,max(b.high) over w as high
+	,min(b.low) over w as low
+	,last_value(b.close) over w as close
+	,avg(volume_24h) over w as volume_24h
+	,avg(market_cap) over w as market_cap
+	,avg(circulating_supply) over w as circulating_supply
+	,avg(volatility) over w as volatility
+
+	,avg(sentiment) over w as sentiment
+
+	,first_value(contributors_active) over w as contributors_active_open
+	,max(contributors_active) over w as contributors_active_high
+	,min(contributors_active) over w as contributors_active_low
+	,last_value(contributors_active) over w as contributors_active_close
+
+	,first_value(contributors_created) over w as contributors_created_open
+	,max(contributors_created) over w as contributors_created_high
+	,min(contributors_created) over w as contributors_created_low
+	,last_value(contributors_created) over w as contributors_created_close
+
+	,first_value(posts_active) over w as posts_active_open
+	,max(posts_active) over w as posts_active_high
+	,min(posts_active) over w as posts_active_low
+	,last_value(posts_active) over w as posts_active_close
+
+	,first_value(posts_created) over w as posts_created_open
+	,max(posts_created) over w as posts_created_high
+	,min(posts_created) over w as posts_created_low
+	,last_value(posts_created) over w as posts_created_close
+
+	,first_value(interactions) over w as interactions_open
+	,max(interactions) over w as interactions_high
+	,min(interactions) over w as interactions_low
+	,last_value(interactions) over w as interactions_close
+
+	,first_value(social_dominance) over w as social_dominance_open
+	,max(social_dominance) over w as social_dominance_high
+	,min(social_dominance) over w as social_dominance_low
+	,last_value(social_dominance) over w as social_dominance_close
+
+	,avg(galaxy_score) over w as galaxy_score
+	,avg(alt_rank) over w as alt_rank
+	
+from intervals a
+inner join landing.lunar_data b on
+	b.datetime >= a.start 
+	and b.datetime < a.end
+where b.symbol_id between 1 and 10
+	
+window w as (
+	partition by b.symbol_id, a.start 
+	order by b.symbol_id,b.datetime asc 
+	rows between unbounded preceding and unbounded following
+	)
+order by b.symbol_id,a.start
+```
+
+## staging
+
+### MV lunar_data_etl.sql
+
+```python
+CREATE MATERIALIZED VIEW landing.lunar_data_etl AS
+WITH include_etl AS 
+(
+    SELECT id, name, symbol, last_update
+    FROM public.symbols 
+    WHERE include_etl = TRUE
+)
+SELECT 
+    b.symbol,
+    a.* 
+FROM 
+    landing.lunar_data a 
+INNER JOIN 
+    include_etl b 
+ON 
+    a.symbol_id = b.id
+    AND a.datetime >= b.last_update - INTERVAL '72 hours'
+ORDER BY 
+    a.symbol_id ASC, 
+    a.datetime ASC;
+
+
+select * from landing.lunar_data_etl
+refresh materialized view landing.lunar_data_etl
 ```
 
 ## Data
