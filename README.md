@@ -1,6 +1,15 @@
 # Status update
 Notes. Relevant only for the developer 🤷‍♂️
 
+## 27/08/2024 ##
+
+* symbol_id list shortened to 80
+* ETL on public.symbols include_etl = TRUE
+* landing.lunar_data_etl -> goes to Pandas -> Dash. Refresh MV with 
+```sql
+refresh materialized view landing.lunar_data_etl
+```
+
 ## 26/08/2024 ##
 
 * Nie jest potrzebny OHLC w ogóle. Agregaty są predefiniowane w views. Dane dla pojedynczego symbol_id przetwarzane do OHLC przez Pandas. 
