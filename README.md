@@ -1,6 +1,13 @@
 # Status update
 Notes. Relevant only for the developer 🤷‍♂️
 
+
+## 31/08/2024 ##
+
+* [] project cleanup 
+* [] zmiana nazwy scheme z landing na data. Schema data jest stricte przeznaczona na operacje na danych. Public zostaje do wszystkiego innego
+* [] Dash
+
 ## 27/08/2024 ##
 
 * symbol_id list shortened to 80

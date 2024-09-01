@@ -18,11 +18,16 @@
             lunar_data.py
             lunar_symbols.py
         loading/
+            dash_data_functions.py
         staging/
             lunar_data_month.sql
             MV lunar_data_etl.sql
     Data/
         lunar_data_2024.sql
+    Frontoffice/
+        dash_app.py
+        assets/
+            styles.css
 
 ```
 
@@ -217,7 +222,7 @@ def dump_lunar_buffer():
                 connection.execute(text("TRUNCATE TABLE landing.buffer_lunar_data;"))
         
         elapsed_time = time.time() - start_time
-        print(f"🔄️ Dumping the buffer: {elapsed_time:.2f} sec")
+        #print(f"🔄️ Dumping the buffer: {elapsed_time:.2f} sec")
 
     except Exception as e:
         print(f"Failed to dump lunar buffer: {e}")
@@ -560,11 +565,15 @@ def update_symbol_list():
 
 ```python
 import time
+from datetime import datetime, timedelta, timezone
+import pandas as pd
+
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils import read_key_usage, dump_lunar_buffer
 from config import lunar_key
+
 
 from lunar_symbols import read_lunar_symbols
 from lunar_data import get_lunar_data, save_lunar_data
@@ -576,7 +585,7 @@ def landing_process():
     key_usage = read_key_usage()
 
     time_pairs = [
-        ("01.01.2016", "31.12.2017"),
+        ("01.01.2016", "31.12.2017"), 
         ("01.01.2018", "31.12.2019"),
         ("01.01.2020", "31.12.2021"),
         ("01.01.2022", "31.12.2023"),
@@ -586,7 +595,7 @@ def landing_process():
     result_code, symbols_df = read_lunar_symbols()
     symbols_df = symbols_df.sort_values(by='symbol_id', ascending=True)
     
-    symbols_df = symbols_df[symbols_df['symbol_id'] > 18349]
+    symbols_df = symbols_df[symbols_df['include_etl'] == True]
 
     for index, row in symbols_df.iterrows():
         symbol_id = row['symbol_id']
@@ -633,17 +642,90 @@ def landing_process():
             time_total = time1+time2+time3
             print(f"{symbol_id} | get: {time1:.3f} | save: {time2:.3f} | read: {time3:.3f} | total: {time_total:.3f}")
             
-            if time_total < 6:
-                time.sleep(6-time_total+1)
+            if time_total < 45:
+                time.sleep(45-time_total+1)
 
 
         # After processing all time pairs for the current symbol_id, dump the buffer
         dump_lunar_buffer()
+
+
+def landing_process_etl():
+    key_usage = read_key_usage()
+
+    result_code, symbols_df = read_lunar_symbols()
+    symbols_df = symbols_df.sort_values(by='last_update', ascending=True)
+    symbols_df = symbols_df[symbols_df['include_etl'] == True]
+    n = len(symbols_df)
+
+    for i, (index, row) in enumerate(symbols_df.iterrows(), start=1):  # start=1 for 1-based index
+        symbol_id = row['symbol_id']
+        symbol_ticker = row['symbol_ticker']
+
+        # Check key_usage limits
+        if key_usage["key_outlook"]["minute"] >= 10:
+            print("Minute limit reached. Waiting 5 seconds.")
+            time.sleep(5)
+            key_usage = read_key_usage()
+            continue
+
+        if key_usage["key_outlook"]["day"] >= 2000:
+            print("Daily limit reached. Waiting 1 hour.")
+            time.sleep(3600)
+            key_usage = read_key_usage()
+            continue
+
+        # Get the last timestamp from the DataFrame
+        last_timestamp = row['last_timestamp']
+        start_time = datetime.fromtimestamp(last_timestamp).replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        end_time = datetime.now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+
+
+        # Format the start_time and end_time as "%d.%m.%Y %H:%M" before passing to get_lunar_data
+        start_time_str = start_time.strftime("%d.%m.%Y %H:%M")
+        end_time_str = end_time.strftime("%d.%m.%Y %H:%M")
+
+        # Measure time for get_lunar_data
+        start_time_get = time.time()
+        result_code, data_df = get_lunar_data(
+            symbol_id, 
+            start_time_str,  # Pass formatted string
+            end_time_str  # Pass formatted string
+        )
+      
+        time1 = time.time() - start_time_get
+        len_data_df = len(data_df) if not data_df.empty else 0
+
+        print(f"{i}/{n} | {symbol_id} | {symbol_ticker} | {start_time_str} - {end_time_str} | #{len_data_df} | {key_usage['key_outlook']['minute']}/10 & {key_usage['key_outlook']['day']}/2000")
+
+        # Measure time for save_lunar_data
+        start_time_save = time.time()
+        if not data_df.empty:
+            save_result_code, save_message = save_lunar_data(data_df)
+        time2 = time.time() - start_time_save
+
+        # Measure time for read_key_usage
+        start_time_read = time.time()
+        key_usage = read_key_usage()
+        time3 = time.time() - start_time_read
+
+        # Print timing information
+        time_total = time1 + time2 + time3
+        print(f"{symbol_id} | get: {time1:.3f} | save: {time2:.3f} | read: {time3:.3f} | total: {time_total:.3f}")
+
+        dump_lunar_buffer()
+
+        if time_total < 45:
+            time.sleep(45 - time_total)
+
         
 
 if __name__ == "__main__":
-    landing_process()
-
+    try:
+        while True:  # Continuous loop until manually stopped
+            landing_process_etl()
+    except KeyboardInterrupt:
+        print("Landing process manually stopped.")
 ```
 
 ## landing
@@ -665,21 +747,21 @@ from config import lunar_key, connection_string
 from utils import register_api_request
 from lunar_symbols import read_lunar_symbols
 
-def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020", end_time: str = "19.08.2024") -> tuple[int, pd.DataFrame]:
+def get_lunar_data(symbol_id: int = 3, start_time: str = "01.01.2020 00:00", end_time: str = "19.08.2025 23:00") -> tuple[int, pd.DataFrame]:
     """
     Call LunarCrush API to receive symbol's hourly timeframe data.
 
     Args:
     symbol_id (int): The ID of the symbol.
-    start_time (str): Start date in the format "dd.mm.yyyy". Default is "01.01.2020".
-    end_time (str): End date in the format "dd.mm.yyyy". Default is "19.08.2024".
+    start_time (str): Start date in the format "dd.mm.yyyy hh:mm".
+    end_time (str): End date in the format "dd.mm.yyyy hh:mm".
 
     Returns:
     Tuple[int, pd.DataFrame]: A tuple containing the result code and raw data as a pandas DataFrame.
     """
     # Combine date with default start and end times
-    start_datetime = f"{start_time} 00:00"
-    end_datetime = f"{end_time} 23:00"
+    start_datetime = f"{start_time}"
+    end_datetime = f"{end_time}"
 
     # Convert to Unix timestamps
     start_unix = int(datetime.strptime(start_datetime, "%d.%m.%Y %H:%M").timestamp())
@@ -938,6 +1020,14 @@ def save_lunar_symbols(symbols_df) -> tuple[int,str]:
 #print(msg)
 ```
 
+## loading
+
+### dash_data_functions.py
+
+```python
+# dash data preparation here
+```
+
 ## staging
 
 ### lunar_data_month.sql
@@ -1153,5 +1243,110 @@ from landing.lunar_data a
 left join public.symbols b on a.symbol_id = b.id
 where symbol_id in (1,2,3,10)
 	and EXTRACT(YEAR FROM datetime) = 2024
+```
+
+## Frontoffice
+
+### dash_app.py
+
+```python
+from dash import Dash, dcc, html, Output, Input
+import dash_bootstrap_components as dbc
+
+app = Dash(__name__, external_stylesheets=[dbc.themes.SOLAR])
+
+# --------------------------------- Data ------------------------------------
+
+
+
+
+
+
+# ---------------------------- Layout Elements ------------------------------------
+header = dbc.Row(
+    dbc.Col(
+        html.H1("GoldenEye - Attention Trading", className="text-center text-primary"),
+        className="bg-light py-2"
+    ),
+    className="header"
+)
+
+content = dbc.Row(
+    [
+        dbc.Col(html.Div("Market Stats", className="left-column bg-secondary text-white p-3"), width=4),
+        dbc.Col(html.Div("Symbol Data", className="right-column bg-dark text-white p-3"), width=8),
+    ],
+    className="content-row"
+)
+
+app.layout = dbc.Container([header, content], fluid=True, className="dash-container")
+
+
+# ---------------------------- Callbacks ------------------------------------
+
+
+
+
+# ---------------------------- Run App ------------------------------------
+
+if __name__ == '__main__':
+    app.run_server(port=8000)
+
+```
+
+## assets
+
+### styles.css
+
+```python
+/* Ensure the body and html take up the full height and have no margins */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevents scrolling and ensures the content fits the screen */
+}
+
+/* The main container should fill the full height of the viewport with no margins */
+.dash-container {
+    height: 100vh; /* Full height of the viewport */
+    width: 100vw;  /* Full width of the viewport */
+    display: flex;
+    flex-direction: column;
+    margin: 0; /* No margin around the container */
+    padding: 0; /* No padding inside the container */
+}
+
+/* Header styling */
+.header {
+    height: 7vh; /* Adjust height of the header */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Content row should fill the remaining space */
+.content-row {
+    flex: 1;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+/* Left and right columns should take up full height and width */
+.left-column, .right-column {
+    height: 100%; /* Full height */
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+/* Additional utility classes for padding, no need to redefine colors */
+.p-3 {
+    padding: 1rem !important;
+}
+
 ```
 

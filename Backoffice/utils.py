@@ -133,7 +133,7 @@ def dump_lunar_buffer():
                 connection.execute(text("TRUNCATE TABLE landing.buffer_lunar_data;"))
         
         elapsed_time = time.time() - start_time
-        print(f"🔄️ Dumping the buffer: {elapsed_time:.2f} sec")
+        #print(f"🔄️ Dumping the buffer: {elapsed_time:.2f} sec")
 
     except Exception as e:
         print(f"Failed to dump lunar buffer: {e}")

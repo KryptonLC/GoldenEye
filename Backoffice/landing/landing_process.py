@@ -19,7 +19,7 @@ def landing_process():
     key_usage = read_key_usage()
 
     time_pairs = [
-        ("01.01.2016", "31.12.2017"),
+        ("01.01.2016", "31.12.2017"), 
         ("01.01.2018", "31.12.2019"),
         ("01.01.2020", "31.12.2021"),
         ("01.01.2022", "31.12.2023"),
@@ -88,7 +88,7 @@ def landing_process_etl():
     key_usage = read_key_usage()
 
     result_code, symbols_df = read_lunar_symbols()
-    symbols_df = symbols_df.sort_values(by='symbol_id', ascending=True)
+    symbols_df = symbols_df.sort_values(by='last_update', ascending=True)
     symbols_df = symbols_df[symbols_df['include_etl'] == True]
     n = len(symbols_df)
 
@@ -146,12 +146,13 @@ def landing_process_etl():
         # Print timing information
         time_total = time1 + time2 + time3
         print(f"{symbol_id} | get: {time1:.3f} | save: {time2:.3f} | read: {time3:.3f} | total: {time_total:.3f}")
-        
+
+        dump_lunar_buffer()
+
         if time_total < 45:
             time.sleep(45 - time_total)
 
-        # After processing the current symbol_id, dump the buffer
-        dump_lunar_buffer()
+        
 
 if __name__ == "__main__":
     try:
